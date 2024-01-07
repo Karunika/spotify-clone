@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, createContext, useContext } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import SpotifyService from '../spotify';
-import { setPaused, update } from '../../store/playback';
+import SpotifyService from '../hooks/spotify';
+import { setPaused, update } from '../store/playback';
 
 export const PlayerContext = createContext({ hello: 'hello' });
 
@@ -64,6 +64,10 @@ const PlayerContextProvider = ({ children }) => {
                     );
                 };
 
+                spotifyAxios(accessToken).put('/me/player', {
+                    device_ids: [device_id],
+                });
+
                 setPlayerLoaded(true);
             });
 
@@ -74,10 +78,10 @@ const PlayerContextProvider = ({ children }) => {
             }
 
             player.current.addListener('player_state_changed', (state) => {
-                console.log('player state changed');
+                // console.log('player state changed');
                 if (!state) return;
 
-                console.log('state:', state);
+                // console.log('state:', state);
                 dispatch(update(state));
                 dispatch(setPaused(state.paused));
             });

@@ -20,8 +20,14 @@ const SidePane = () => {
 
     return (
         <List
-            variant="soft"
-            sx={{ p: 1, height: '100%', borderRadius: '0 12px 12px 0' }}
+            variant="outlined"
+            sx={{
+                p: 1,
+                height: '100%',
+                borderLeft: 'none',
+                borderTop: 'none',
+                borderBottom: 'none',
+            }}
         >
             <Stack
                 fullWidth

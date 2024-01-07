@@ -30,10 +30,8 @@ const PanelSplitter = ({ children: [left, right] }) => {
             >
                 {left}
             </Panel>
-            <PanelResizeHandle style={{ width: '5px' }} />
-            <Panel minSize={30} style={{ position: 'relative' }}>
-                {right}
-            </Panel>
+            <PanelResizeHandle style={{ width: isSidePaneOpen ? '4px' : 0 }} />
+            <Panel style={{ position: 'relative' }}>{right}</Panel>
         </PanelGroup>
     );
 };

@@ -1,47 +1,69 @@
 import { useEffect, useState, useTransition } from 'react';
-import { SPOTIFY_WEB_API_ENDPOINTS } from '../../util/constants/api';
-import useBaseAxios from './useBaseAxios';
-import useAuth from './useAuth';
+import { useSpotify } from '../../context/spotify';
 
-const useSearch = (query, type = 'artist') => {
-    const { getClientAccessToken } = useAuth();
+const useSearch = (query, type = 'artist', limit = 20) => {
+    const [spotify, initialising] = useSpotify();
 
     const [result, setResult] = useState([]);
+    const [offset, setOffset] = useState(0);
+    const [isLoading, setLoading] = useState(true);
+
     const [isPending, startTransition] = useTransition();
 
-    const { spotifyAxios } = useBaseAxios();
+    useEffect(() => {
+        console.log(isLoading, 'loading value');
+        if (isLoading) return;
 
-    const fetchResponse = async (abortController) => {
-        const accessToken = await getClientAccessToken();
+        const scrollSheet = document.getElementById('scroll-sheet');
 
-        const response = await spotifyAxios(accessToken).get(
-            SPOTIFY_WEB_API_ENDPOINTS.SEARCH,
-            {
-                params: {
-                    q: query,
-                    type,
-                },
-                singal: abortController.signal,
+        const scrollEventHandler = ({ target }) => {
+            const { scrollTop, scrollHeight, offsetHeight } = target;
+
+            if (scrollTop + 5 >= scrollHeight - offsetHeight) {
+                setOffset((prev) => prev + 1);
             }
-        );
+        };
 
-        setResult(response.data[type + 's']);
-    };
+        scrollSheet.addEventListener('scrollend', scrollEventHandler);
+
+        return () => {
+            scrollSheet.removeEventListener('scrollend', scrollEventHandler);
+        };
+    }, [isLoading]);
 
     useEffect(() => {
+        if (initialising || query === '') return;
+        setLoading(true);
+
         const controller = new AbortController();
-        if (query === '') {
-            setResult(null);
-        } else {
-            startTransition(() => {
-                // non-urgent state updates
-                fetchResponse(controller);
-            });
-        }
+
+        startTransition(() => {
+            spotify
+                .getSearch(query, type, limit, 0, controller)
+                .then((res) => setResult(res.data[type + 's'].items))
+                .then(() => setLoading(false))
+                .catch(() => console.log('aborted'));
+        });
+
         return () => {
             controller.abort();
         };
-    }, [query, type]);
+    }, [query, type, initialising]);
+
+    useEffect(() => {
+        if (offset === 0) return;
+        setLoading(true);
+        spotify
+            .getSearch(query, type, limit, limit * offset)
+            .then((res) => {
+                setResult((result) => [
+                    ...result,
+                    ...res.data[type + 's'].items,
+                ]);
+            })
+            .then(() => setLoading(false))
+            .catch(() => console.log('aborted'));
+    }, [offset]);
 
     return result;
 };

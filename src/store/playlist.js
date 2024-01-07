@@ -44,7 +44,6 @@ const playlistSlice = createSlice({
                     tree[item.parent][item.previous] = item.id;
                 }
             });
-            console.log(tree);
 
             return tree;
         },

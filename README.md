@@ -68,3 +68,15 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+initialise app -> check if authorised
+
+    unauthorised -> restricted activites/routes
+
+    authorised -> unrestrict -> notify all the restrictions to unrestrict
+            |                   |
+            dispatch auth store
+
+-   useselectore or middleware to check expriry and refresh
+-   authservice for auth code pathway only one-time button cliick or refresh token throws error
+-   client cred (and auth code if present) fetch on initialising app

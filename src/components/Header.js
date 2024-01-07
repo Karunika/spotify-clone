@@ -9,17 +9,21 @@ import Select from '@mui/joy/Select';
 import Option from '@mui/joy/Option';
 import Input from '@mui/joy/Input';
 import Divider from '@mui/joy/Divider';
+import Sheet from '@mui/joy/Sheet';
 import SearchIcon from '@mui/icons-material/Search';
 
 import { setQuery, setType } from '../store/search';
 import Profile from './profile';
 
-const AppBar = styled('div')(({ theme, open }) => ({
+const AppBar = styled(Sheet)(({ theme, open }) => ({
     zIndex: theme.zIndex.AppBar,
     position: 'sticky',
     top: 0,
     width: '100%',
     padding: 12,
+    borderTop: 'none',
+    borderRight: 'none',
+    borderLeft: 'none',
 }));
 
 const options = ['artist', 'track', 'album', 'playlist'];
@@ -31,7 +35,7 @@ const Header = () => {
     const search = useSelector((store) => store.search);
 
     return (
-        <AppBar>
+        <AppBar variant="outlined">
             <Stack fullWidth spacing={2} direction="row" alignItems="center">
                 {!isSidePaneOpen && (
                     <IconButton

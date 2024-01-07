@@ -6,11 +6,11 @@ import CardContent from '@mui/joy/CardContent';
 import Typography from '@mui/joy/Typography';
 import IconButton from '@mui/joy/IconButton';
 import PlayArrow from '@mui/icons-material/PlayArrow';
-import SpotifyService from '../hooks/spotify';
 import { useDispatch } from 'react-redux';
 import { setQuery } from '../store/search';
 import { Link } from 'react-router-dom';
-import { usePlayer } from '../hooks/context/player';
+import { usePlayer } from '../context/player';
+import SpotifyService from '../hooks/spotify';
 
 const SearchCard = forwardRef(({ result, type }, ref) => {
     const { name, image, desc, link } =
@@ -46,18 +46,19 @@ const SearchCard = forwardRef(({ result, type }, ref) => {
             ref={ref}
             sx={{
                 height: '100%',
-                width: { xs: '100%', sm: 200, md: 240, lg: 260 },
+                width: { xs: '100%', sm: 160, lg: 200 },
+                flexGrow: 1,
             }}
         >
             <CardOverflow>
-                <AspectRatio ratio="0.98">
+                <AspectRatio ratio="1">
                     <img src={image} />
                 </AspectRatio>
                 {type === 'track' && (
                     <IconButton
                         size="md"
                         variant="solid"
-                        color="danger"
+                        color="primary"
                         sx={{
                             position: 'absolute',
                             zIndex: 2,
@@ -73,8 +74,26 @@ const SearchCard = forwardRef(({ result, type }, ref) => {
                 )}
             </CardOverflow>
             <CardContent>
-                <Typography level="title-md">{name}</Typography>
-                <Typography level="body-sm">{desc}</Typography>
+                <Typography
+                    level="title-md"
+                    sx={{
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                    }}
+                >
+                    {name}
+                </Typography>
+                <Typography
+                    level="body-sm"
+                    sx={{
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                    }}
+                >
+                    {desc}
+                </Typography>
             </CardContent>
             <CardOverflow variant="soft">
                 {link && (

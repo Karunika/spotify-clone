@@ -1,8 +1,5 @@
 import { useEffect, useState } from 'react';
 import Container from '@mui/joy/Container';
-import Stack from '@mui/joy/Stack';
-import Box from '@mui/joy/Box';
-import PlayerFooter from './playerFooter';
 import { useSelector } from 'react-redux';
 import SpotifyService from '../hooks/spotify';
 import { SPOTIFY_WEB_API_ENDPOINTS } from '../util/constants/api';
@@ -17,13 +14,14 @@ const FullScreenPlayer = () => {
     const { getClientAccessToken } = SpotifyService.useAuth();
     const [analysis, setAnalysis] = useState([]);
 
-    const { ANALYSIS } = SPOTIFY_WEB_API_ENDPOINTS.TRACK(current_track.id);
+    const { TRACK } = SPOTIFY_WEB_API_ENDPOINTS;
 
     const getAudioAnalysis = async () => {
         const accessToken = await getClientAccessToken();
 
-        const response = await spotifyAxios(accessToken).get(ANALYSIS);
-        console.log(response.data);
+        const response = await spotifyAxios(accessToken).get(
+            TRACK.ANALYSIS(current_track.id)
+        );
         setAnalysis(response.data);
     };
 

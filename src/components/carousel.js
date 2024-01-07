@@ -10,6 +10,7 @@ import {
 import { styled } from '@mui/joy/styles';
 import IconButton from '@mui/joy/IconButton';
 import Box from '@mui/joy/Box';
+import Grid from '@mui/joy/Grid';
 import ChevronLeft from '@mui/icons-material/ChevronLeft';
 import ChevronRight from '@mui/icons-material/ChevronRight';
 
@@ -22,7 +23,6 @@ const ArrowButton = styled(IconButton)(() => ({
 const Carousel = ({ children }) => {
     const [current, setCurrent] = useState(0);
     const [frameWidth, setFrameWidth] = useState(0);
-    const [slideWidth, setSlideWidth] = useState(0);
 
     const parentRef = useRef();
     const childRefs = useRef([]);
@@ -43,15 +43,11 @@ const Carousel = ({ children }) => {
         if (parentRef.current && childRefs.current && childRefs.current[0]) {
             const recaliberateWidth = () => {
                 setFrameWidth(parentRef.current.offsetWidth);
-                setSlideWidth(childRefs.current[0].offsetWidth);
             };
 
             const resizeObserver = new ResizeObserver(recaliberateWidth);
 
             resizeObserver.observe(parentRef.current);
-            for (let child of childRefs.current) {
-                resizeObserver.observe(child);
-            }
 
             return () => {
                 resizeObserver.disconnect();
@@ -59,11 +55,21 @@ const Carousel = ({ children }) => {
         }
     }, [children]);
 
-    const slidesPerFrame = Math.floor(frameWidth / slideWidth);
-    const gapWidth =
-        (frameWidth - slidesPerFrame * slideWidth) / (slidesPerFrame - 1);
-    const width =
-        gapWidth * (children.length - 1) + slideWidth * children.length;
+    const slidesPerFrame =
+        frameWidth < 360
+            ? 1
+            : frameWidth < 520
+              ? 2
+              : frameWidth < 700
+                ? 3
+                : frameWidth < 900
+                  ? 4
+                  : 5;
+    const gapWidth = 4 * 8; // 1 gap == 8px
+    const slideWidth =
+        (frameWidth - (slidesPerFrame - 1) * gapWidth) / slidesPerFrame;
+    const translateWidth = slideWidth + gapWidth;
+    const width = children.length * (slideWidth + gapWidth) - gapWidth;
 
     return (
         <Box
@@ -81,17 +87,15 @@ const Carousel = ({ children }) => {
                 <ChevronLeft />
             </ArrowButton>
             <Box sx={{ overflowX: 'hidden' }} ref={parentRef}>
-                <Box
+                <Grid
+                    display="inline-flex"
+                    justifyContent="space-between"
+                    gap={gapWidth / 8}
                     sx={{
-                        display: 'inline-flex',
                         transition: '0.2s ease',
-                        transform: `translateX(${
-                            -(slideWidth + gapWidth) * current
-                        }px)`,
-                        justifyContent: 'space-between',
+                        transform: `translateX(${-translateWidth * current}px)`,
                         ...(width && { width }),
                     }}
-                    ref={parentRef}
                 >
                     {children.map((child, index) => (
                         <Fragment key={index}>
@@ -100,7 +104,7 @@ const Carousel = ({ children }) => {
                             })}
                         </Fragment>
                     ))}
-                </Box>
+                </Grid>
             </Box>
             <ArrowButton
                 disabled={current >= children.length - slidesPerFrame}

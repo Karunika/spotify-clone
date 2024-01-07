@@ -27,10 +27,7 @@ const Queue = () => {
             const accessToken = await getAuthCodeAccessToken();
             setIsAuthenticated(true);
 
-            const response = await spotifyAxios(accessToken).get(
-                SPOTIFY_WEB_API_ENDPOINTS.QUEUE
-            );
-            console.log(response.data.queue);
+            const response = await spotifyAxios(accessToken).get();
 
             setIsLoading(false);
             setQueue(response.data.queue);
@@ -40,7 +37,7 @@ const Queue = () => {
     };
 
     const handleClick = () => {
-        getUserQueue();
+        // getUserQueue();
     };
 
     useEffect(() => {

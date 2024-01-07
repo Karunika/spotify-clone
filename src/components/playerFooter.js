@@ -1,5 +1,7 @@
 import { useState, useTransition, useRef, useEffect } from 'react';
 import { styled } from '@mui/joy/styles';
+import Link from '@mui/joy/Link';
+import Sheet from '@mui/joy/Sheet';
 import Stack from '@mui/joy/Stack';
 import Slider from '@mui/joy/Slider';
 import AspectRatio from '@mui/joy/AspectRatio';
@@ -19,21 +21,21 @@ import Repeat from '@mui/icons-material/Repeat';
 import RepeatOn from '@mui/icons-material/RepeatOn';
 import RepeatOneOn from '@mui/icons-material/RepeatOneOn';
 
+import { Link as AnchorLink } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { usePlayer } from '../hooks/context/player';
+import { usePlayer } from '../context/player';
 
-const Footer = styled('div')(({ theme }) => ({
+const Footer = styled(Sheet)(({ theme }) => ({
     zIndex: theme.zIndex.Footer,
+    width: '100%',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'stretch',
-    columnGap: 2,
-    padding: 1,
-    width: '100%',
     bottom: 0,
-    padding: 24,
-    boxSizing: 'border-box',
-    backgroundColor: theme.variants.plain.context,
+    px: 2,
+    borderBottom: 'none',
+    borderRight: 'none',
+    borderLeft: 'none',
 }));
 
 const timeStringFormat = (timestamp) => {
@@ -65,9 +67,9 @@ const PlayerFooter = () => {
     const elapsedTime = currentTime - initialTime;
 
     useEffect(() => {
+        setInitialTime(new Date().getTime() - position);
+        setCurrentTime(new Date().getTime());
         if (!paused) {
-            setInitialTime(new Date().getTime() - position);
-            setCurrentTime(new Date().getTime());
             trackTimer.current = setInterval(() => {
                 setCurrentTime(new Date().getTime());
             }, 1000);
@@ -77,6 +79,22 @@ const PlayerFooter = () => {
             };
         }
     }, [paused, position]);
+
+    const [trackSlidingVal, setTrackSlidingVal] = useState();
+    const [trackSliding, setTrackSliding] = useState(false);
+
+    const trackSliderChangeHandler = (event, value) => {
+        setTrackSliding(true);
+        setTrackSlidingVal(value);
+    };
+
+    const trackSliderChangeCommitHandler = (event, value) => {
+        player.seek(value).then(() => {
+            setTimeout(() => {
+                setTrackSliding(false);
+            }, 10);
+        });
+    };
 
     const handlePlayButtonClick = () => {
         setDisabled(true);
@@ -108,10 +126,6 @@ const PlayerFooter = () => {
         player.seek(elapsedTime + 10_000);
     };
 
-    const trackSliderChangeHandler = (event, value) => {
-        player.seek(value);
-    };
-
     const activatePlayer = () => {
         player.activateElement();
     };
@@ -128,7 +142,9 @@ const PlayerFooter = () => {
 
     useEffect(() => {
         if (player) {
-            player.setVolume(volume);
+            startTransition(() => {
+                player.setVolume(volume);
+            });
         }
     }, [volume]);
 
@@ -139,17 +155,17 @@ const PlayerFooter = () => {
     // }
 
     return (
-        <Footer onClick={activatePlayer} fullWitdh>
-            <AspectRatio ratio="1" variant="solid" sx={{ width: 128 }}>
+        <Footer onClick={activatePlayer} fullWitdh variant="outlined">
+            <AspectRatio ratio="0.9" variant="solid" sx={{ width: 98 }}>
                 <img src={current_track?.album?.images[1].url ?? ''} />
             </AspectRatio>
-            <Stack sx={{ width: '100%', ml: 4 }}>
+            <Sheet sx={{ width: '100%', ml: 0.2, px: 1, pt: 1 }}>
                 <Stack
                     direction="row"
                     alignItems="center"
-                    sx={{ justifyContent: 'space-between' }}
+                    justifyContent="space-between"
                 >
-                    <Stack spacing={3} direction="row" alignItems="center">
+                    <Stack spacing={1} direction="row" alignItems="center">
                         <IconButton
                             disabled={disabled}
                             onClick={goBack10Seconds}
@@ -167,12 +183,9 @@ const PlayerFooter = () => {
                             onClick={handlePlayButtonClick}
                         >
                             {paused ? (
-                                <PlayArrow
-                                    sx={{ fontSize: 48 }}
-                                    color="primary"
-                                />
+                                <PlayArrow sx={{ fontSize: 48 }} />
                             ) : (
-                                <Pause sx={{ fontSize: 52 }} color="primary" />
+                                <Pause sx={{ fontSize: 48 }} />
                             )}
                         </IconButton>
                         <IconButton
@@ -188,6 +201,7 @@ const PlayerFooter = () => {
                             <Forward10 />
                         </IconButton>
                         <IconButton
+                            sx={{ ml: 2 }}
                             disabled={disabled}
                             onClick={repeatModeClickHandler}
                         >
@@ -246,21 +260,32 @@ const PlayerFooter = () => {
                         fullWitdh
                         min={0}
                         max={duration ? +duration : 0}
-                        value={elapsedTime}
+                        value={trackSliding ? trackSlidingVal : elapsedTime}
+                        valueLabelDisplay="auto"
+                        valueLabelFormat={timeStringFormat(elapsedTime)}
                         onChange={trackSliderChangeHandler}
+                        onChangeCommitted={trackSliderChangeCommitHandler}
                     />
-                    <Typography level="body-sm">
-                        {timeStringFormat(currentTime - initialTime)}/
+                    <Typography level="body-xs">
+                        {timeStringFormat(elapsedTime)}/
                         {timeStringFormat(duration)}
                     </Typography>
                 </Stack>
                 <marquee>
-                    <Stack direction="row">
-                        <Typography level="title-sm">
-                            {`${(current_track?.artists || [])
-                                .map((n) => n.name)
-                                .join(', ')}`}
-                        </Typography>
+                    <Stack direction="row" alignItems="center">
+                        {(current_track?.artists || []).map((artist, i) => (
+                            <Link
+                                component={AnchorLink}
+                                color="neutral"
+                                to={`/artist/${artist.uri.split(':')[2]}`}
+                                sx={{ mr: 0.8 }}
+                            >
+                                {artist.name +
+                                    (i === current_track.artists.length - 1
+                                        ? ''
+                                        : ',')}
+                            </Link>
+                        ))}
                         <Typography level="body-sm">
                             {`: ${current_track?.name ?? ''} (${
                                 current_track?.album?.name ?? ''
@@ -268,7 +293,7 @@ const PlayerFooter = () => {
                         </Typography>
                     </Stack>
                 </marquee>
-            </Stack>
+            </Sheet>
         </Footer>
     );
 };

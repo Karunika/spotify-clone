@@ -1,6 +1,4 @@
-import { useMemo } from 'react';
 import axios from 'axios';
-import { ACCESS_TOKEN } from '../../util/constants/localStorage';
 
 const useSpotifyAxios = () => {
     const spotifyAxios = (accessToken) =>

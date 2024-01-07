@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import SpotifyService from '../hooks/spotify/index';
+import AspectRatio from '@mui/joy/AspectRatio';
 import Container from '@mui/joy/Container';
 import Chip from '@mui/joy/Chip';
 import List from '@mui/joy/List';
@@ -17,78 +17,95 @@ import PlayArrow from '@mui/icons-material/PlayArrow';
 import Carousel from '../components/carousel';
 import SearchCard from '../components/searchCard';
 
-import { SPOTIFY_WEB_API_ENDPOINTS } from '../util/constants/api';
+import getAverageColor from 'get-average-color';
+import { useSpotify } from '../context/spotify';
 
 const Artist = () => {
     const { artistId } = useParams();
     const [isLoading, setIsLoading] = useState(true);
     const [artist, setArtist] = useState(null);
-    const [topTracks, setTopTracks] = useState(null);
-    const [relatedArtists, setRelatedArtists] = useState(null);
-    const { spotifyAxios, isLoading: initializingBaseAxios } =
-        SpotifyService.useBaseAxios();
-    const { getClientAccessToken } = SpotifyService.useAuth();
-    const { ARTIST, TOP_TRACKS, RELATED_ARTISTS } =
-        SPOTIFY_WEB_API_ENDPOINTS.ARTIST(artistId);
+    const [topTracks, setTopTracks] = useState([]);
+    const [relatedArtists, setRelatedArtists] = useState([]);
 
-    const getArtist = async () => {
-        const accessToken = await getClientAccessToken();
-        const response = await spotifyAxios(accessToken).get(ARTIST);
-        console.log(response);
-
-        return response.data;
-    };
-
-    const getTopTracks = async () => {
-        const accessToken = await getClientAccessToken();
-        const response = await spotifyAxios(accessToken).get(TOP_TRACKS, {
-            params: {
-                market: 'IT',
-            },
-        });
-
-        return response.data.tracks;
-    };
-
-    const getRelatedArtists = async () => {
-        const accessToken = await getClientAccessToken();
-        const response = await spotifyAxios(accessToken).get(RELATED_ARTISTS);
-
-        setRelatedArtists(response.data.artists);
-    };
+    // const [userSpotify, userInitialising] = useUserSpotify();
+    const [spotify, initialising] = useSpotify();
 
     const playButtonHandler = () => {};
 
     useEffect(() => {
-        if (!initializingBaseAxios) {
-            Promise.all([getArtist(), getTopTracks()]).then(
-                ([artistData, topTracksData]) => {
-                    setArtist(artistData);
-                    setTopTracks(topTracksData);
-                    // console.log(topTracksData)
-                    setIsLoading(false);
-                }
-            );
+        if (!initialising) {
+            spotify.getArtist(artistId).then((res) => {
+                setArtist(res);
+            });
+
+            spotify.getArtistTopTracks(artistId).then((res) => {
+                setArtist(res.tracks);
+            });
+
+            // spotify.getArtistAlbums(artistId).then((res) => {
+            //     setArtist(res.data.album)
+            // })
         }
-        getRelatedArtists();
-    }, [artistId, initializingBaseAxios]);
+    }, [artistId, initialising]);
+
+    const [bannerColor, setBannerColor] = useState('#aaaaaa');
+
+    useEffect(() => {
+        if (!isLoading) {
+            getAverageColor(artist.images[0].url)
+                .then(({ r, g, b }) => {
+                    setBannerColor(`rgb(${r}, ${g}, ${b})`);
+                })
+                .catch((err) => {
+                    console.log(err);
+                });
+        }
+    }, [artist]);
 
     if (isLoading) return <div>Loading...</div>;
 
     return (
-        <Container>
-            <img src={artist.images[0].url} />
-            <Typography level="h2">{artist.name}</Typography>
-            <Box>
-                {artist.genres.map((genre) => (
-                    <Chip sx={{ mr: 1 }} variant="solid">
-                        {' '}
-                        {genre}{' '}
-                    </Chip>
-                ))}
+        <Container sx={{ position: 'relative' }}>
+            <AspectRatio ratio="16/3">
+                <div style={{ backgroundColor: bannerColor }}></div>
+            </AspectRatio>
+            <Box justifyContent="center" flexDirection="row" display="flex">
+                <AspectRatio
+                    ratio="1"
+                    sx={{
+                        width: '32%',
+                        position: 'absolute',
+                        transform: 'translateY(-50%)',
+                        borderRadius: '50%',
+                    }}
+                    variant="outlined"
+                >
+                    <img src={artist.images[0].url} />
+                </AspectRatio>
+            </Box>
+            <Box alignItems="center" display="flex" flexDirection="column">
+                {/* ppseudo element */}
+                <AspectRatio
+                    ratio="1"
+                    sx={{ width: 'calc(16% + 6px)', mb: 4 }}
+                    slotProps={{ root: { style: { opacity: 0 } } }}
+                ></AspectRatio>
+                {/* ppseudo element */}
+                <Typography level="h2">{artist.name}</Typography>
+                <br />
+                <Box>
+                    {artist.genres.map((genre) => (
+                        <Chip sx={{ mr: 1 }} variant="outlined">
+                            {' '}
+                            {genre}{' '}
+                        </Chip>
+                    ))}
+                </Box>
             </Box>
             <br />
+            <br />
             <Typography level="h4">Top tracks</Typography>
+            <br />
             <List>
                 {topTracks.map((track) => (
                     <>
@@ -108,8 +125,8 @@ const Artist = () => {
                             </ListItemContent>
                             <IconButton
                                 size="md"
-                                variant="solid"
-                                color="danger"
+                                variant="soft"
+                                color="primary"
                                 sx={{
                                     position: 'absolute',
                                     zIndex: 2,

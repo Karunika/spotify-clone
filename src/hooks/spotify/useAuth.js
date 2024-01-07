@@ -15,19 +15,7 @@ import { SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET } from '../../util/config';
 import { setAuthCode, setClientCred } from '../../store/auth';
 import { generateRandomString, sha256, base64encode } from '../../util/auth';
 import { useDispatch, useSelector } from 'react-redux';
-
-const scope = [
-    'user-read-private',
-    'user-read-email',
-    'user-library-read',
-    'user-library-modify',
-    'user-read-playback-state',
-    'user-modify-playback-state',
-    'user-read-currently-playing',
-    'streaming',
-    'user-top-read',
-    'user-read-recently-played',
-].join(' ');
+import scopes from '../../util/scopes';
 
 const useAuthService = () => {
     const authStore = useSelector((store) => store.auth);
@@ -43,7 +31,7 @@ const useAuthService = () => {
         const params = {
             response_type: 'code',
             client_id: SPOTIFY_CLIENT_ID,
-            scope,
+            scope: scopes.join(' '),
             code_challenge_method: 'S256',
             code_challenge: codeChallenge,
             redirect_uri: 'http://localhost:3000/callback',
